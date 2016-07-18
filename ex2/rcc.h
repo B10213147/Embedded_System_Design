@@ -6,11 +6,9 @@
 #endif /* __cplusplus */
 
 #include "stm32f0xx.h"
-
-#define DISABLE 0x00
-#define ENABLE	0x01
 	 
-extern void RCC_AHBPeriphClockCmd(uint32_t RCC_Periph, uint8_t NewState);
+extern void RCC_AHBPeriphClockCmd(uint32_t RCC_Periph, FunctionalState NewState);
+extern void RCC_APB1PeriphClockCmd(uint32_t RCC_Periph, FunctionalState NewState);
 
 #ifdef __cplusplus
 }
