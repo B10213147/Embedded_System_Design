@@ -4,15 +4,15 @@ void EXTI_Init(int EXTI_Line, EXTITrigger_TypeDef EXTI_Trigger, FunctionalState 
 	if(EXTI_LineCmd != DISABLE){
 		EXTI->IMR |= 0x1 << EXTI_Line;
 		switch(EXTI_Trigger){
-			case EXTI_Trigger_Rising:
+			case EXTI_Trigger_Rising_Falling:
 				EXTI->RTSR |= 0x1 << EXTI_Line;
+				EXTI->FTSR |= 0x1 << EXTI_Line;
 				break;
 			case EXTI_Trigger_Falling:
 				EXTI->FTSR |= 0x1 << EXTI_Line;
 				break;
 			default:
 				EXTI->RTSR |= 0x1 << EXTI_Line;
-				EXTI->FTSR |= 0x1 << EXTI_Line;
 		}
 	}
 	else{
