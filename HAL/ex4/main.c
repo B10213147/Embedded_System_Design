@@ -4,13 +4,17 @@ void GPIOC_Config(void);
 void EXTI0_1_IRQHandler_Config(void);
 void TIM2_IRQHandler_Config(void);
 
-int led_f = 1;	// LED frequency
+TIM_HandleTypeDef TimHandle;
+
 int main(void){
 	/* Condigure GPIOC*/
 	GPIOC_Config();
 	
 	/* Configure EXTI_Line0 (connected to PA.00 pin) in interrupt mode */
 	EXTI0_1_IRQHandler_Config();
+	
+	/* Configure Timer2 in interrupt mode */
+	TIM2_IRQHandler_Config();
 	
 	while(1);
 }
@@ -42,28 +46,46 @@ void EXTI0_1_IRQHandler_Config(void){
 void TIM2_IRQHandler_Config(void){
 	__HAL_RCC_TIM2_CLK_ENABLE();
 	
-	TIM_Base_InitTypeDef Structure;
-	Structure.ClockDivision = 0;
-	Structure.CounterMode = TIM_COUNTERMODE_UP;
-	Structure.Period = 0xffffffff;
-	Structure.Prescaler = TIM_CLOCKDIVISION_DIV1;	
-	TIM_Base_SetConfig(TIM2, &Structure);
+	TimHandle.Instance = TIM2;
 	
-	TIM_HandleTypeDef htim;
-	htim.Instance = TIM2;
+	TimHandle.Init.Period            = 0xffffffff;
+	TimHandle.Init.Prescaler         = 0;
+	TimHandle.Init.ClockDivision     = 0;
+	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+	TimHandle.Init.RepetitionCounter = 0;
+	HAL_TIM_Base_Init(&TimHandle);
 
-	
-	HAL_TIM_OC_Start_IT(&htim, TIM_CHANNEL_1);
+	__HAL_TIM_SET_COMPARE(&TimHandle, TIM_CHANNEL_1, 100);	
+	HAL_TIM_OC_Start_IT(&TimHandle, TIM_CHANNEL_1);
 	
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 }
 
+int led_f = 1;	// LED frequency
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == GPIO_PIN_0){
+	if(GPIO_Pin & GPIO_PIN_0){
 		led_f = 1 + (led_f % 10);
 	}
 }
 
+int period = 8000000;
+float duty = 0.5;
+GPIO_PinState pin_state = GPIO_PIN_RESET;
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim){
-	
+	if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1){
+		__HAL_TIM_SET_COUNTER(&TimHandle, 0);
+		
+		int nH = duty * period / led_f;
+		int nL = (1 - duty) *period / led_f;
+		
+		if(pin_state == GPIO_PIN_RESET){
+			pin_state = GPIO_PIN_SET;
+			__HAL_TIM_SET_COMPARE(&TimHandle, TIM_CHANNEL_1, nH);	
+		}
+		else{	// pin_state == 1
+			pin_state = GPIO_PIN_RESET;
+			__HAL_TIM_SET_COMPARE(&TimHandle, TIM_CHANNEL_1, nL);
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, pin_state);
+	}
 }

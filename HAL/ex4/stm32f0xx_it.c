@@ -1,4 +1,7 @@
 #include "stm32f0xx_it.h"
+
+extern TIM_HandleTypeDef    TimHandle;
+
 /******************************************************************************/
 /*            Cortex-M0 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -69,14 +72,12 @@ void SysTick_Handler(void)
   */
 void EXTI0_1_IRQHandler(void)
 {
-	if(EXTI->PR & EXTI_PR_PIF0){
-		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-	}
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
 }
 
 void TIM2_IRQHandler(void)
 {
-	
+	HAL_TIM_IRQHandler(&TimHandle);
 }
 /**
   * @}
